@@ -18,6 +18,10 @@ public abstract class Player {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public boolean isBusted() {
         return busted;
     }
@@ -26,5 +30,13 @@ public abstract class Player {
         this.busted = busted;
     }
 
-    abstract protected void hit();
+    public boolean hasBlackjack() {
+        return hand.isBlackjack();
+    }
+
+    public int getHandSum() {
+        return hand.getSum();
+    }
+
+    abstract protected void hit(Card card);
 }

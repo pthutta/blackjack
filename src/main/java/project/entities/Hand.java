@@ -48,6 +48,26 @@ public class Hand {
         return cards.size() == 2 && sum == 21;
     }
 
+    public Card getCard(int index) {
+        return cards.get(index);
+    }
+
+    public boolean canSplit() {
+        return cards.size() == 2 && cards.get(0).getRank().getValue() == cards.get(0).getRank().getValue();
+    }
+
+    public int getCardCount() {
+        return cards.size();
+    }
+
+    public Card split() {
+        if (canSplit()) {
+            return cards.remove(1);
+        }
+
+        return null;
+    }
+
     private void lowerAceValue() {
         for (Card card : cards) {
             if (card.getRank() == CardRank.ACE11) {
@@ -62,9 +82,8 @@ public class Hand {
         StringBuilder s = new StringBuilder();
 
         for (Card card : cards) {
-            s.append(card.getRank())
-                    .append(" of ")
-                    .append(card.getSuit())
+            s.append("\t")
+                    .append(card)
                     .append(System.lineSeparator());
         }
 

@@ -10,8 +10,15 @@ public class Dealer extends Player {
         super(name);
     }
 
-    @Override
-    public void hit() {
+    public Card firstCard() {
+        return hand.getCard(0);
+    }
 
+    @Override
+    public void hit(Card card) {
+        if (hand.addCard(card)) {
+            setBusted(true);
+            return;
+        }
     }
 }
