@@ -1,15 +1,15 @@
 package project.entities;
 
-import project.entities.Card;
 import project.enums.CardRank;
 import project.enums.CardSuit;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Represents deck of all remaining cards and cards in the discard pile.
+ *
  * @author Peter Hutta
  * @version 1.0  10.6.2018
  */
@@ -22,9 +22,13 @@ public class Deck {
             addDeck();
         }
 
-        Collections.shuffle(cards);
+        shuffle();
     }
 
+    /**
+     * Draws one card and removes it from the deck.
+     * @return drawn card
+     */
     public Card draw() {
         if (cards.size() == 0) {
             shuffleDiscardToCards();
@@ -32,6 +36,10 @@ public class Deck {
         return cards.remove(cards.size() - 1);
     }
 
+    /**
+     * Add card to the discard pile.
+     * @param card card to discard
+     */
     public void discard(Card card) {
         discardPile.add(card);
     }

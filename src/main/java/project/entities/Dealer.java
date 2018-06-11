@@ -4,7 +4,7 @@ package project.entities;
  * @author Peter Hutta
  * @version 1.0  9.6.2018
  */
-public class Dealer extends Player {
+public class Dealer extends Human {
 
     public Dealer(String name) {
         super(name);

@@ -1,13 +1,13 @@
 package project.entities;
 
-import project.entities.Card;
 import project.enums.CardRank;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Class represents all cards a player is currently holding.
+ *
  * @author Peter Hutta
  * @version 1.0  10.6.2018
  */
@@ -17,15 +17,24 @@ public class Hand {
     private List<Card> cards = new ArrayList<>();
     private boolean isSoft = false;
 
+    /**
+     * Adds card to hand. Changes hand to hard if it is already soft and it would bust.
+     *
+     * @param card card to add
+     * @return true if hand busted, false otherwise
+     */
     public boolean addCard(Card card) {
+        if (card == null) {
+            throw new IllegalArgumentException("Card is null");
+        }
+
         cards.add(card);
 
         if (card.getRank() == CardRank.ACE11) {
             isSoft = true;
         }
 
-        int value = card.getRank().getValue();
-        if (getSum() + value > HAND_LIMIT && isSoft) {
+        if (getSum() > HAND_LIMIT && isSoft()) {
             isSoft = false;
             lowerAceValue();
         }
@@ -58,13 +67,17 @@ public class Hand {
     }
 
     public boolean canSplit() {
-        return cards.size() == 2 && cards.get(0).getRank().getValue() == cards.get(0).getRank().getValue();
+        return cards.size() == 2 && cards.get(0).getRank().getValue() == cards.get(1).getRank().getValue();
     }
 
     public int getCardCount() {
         return cards.size();
     }
 
+    /**
+     * Splits hand and returns second card,
+     * @return second card
+     */
     public Card split() {
         if (canSplit()) {
             return cards.remove(1);

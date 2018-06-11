@@ -2,7 +2,6 @@ package project;
 
 import project.entities.*;
 import project.enums.CardRank;
-import project.enums.CardSuit;
 
 import java.util.ArrayList;
 import java.util.InputMismatchException;
@@ -24,7 +23,7 @@ public class Game {
     private int currentRound = 0;
 
     private Dealer dealer;
-    private List<Human> players = new ArrayList<>();
+    private List<Player> players = new ArrayList<>();
     private Deck cardDeck;
 
     private boolean gameEnd = false;
@@ -72,13 +71,16 @@ public class Game {
 
         for (int i = 0; i < humanPlayers; i++) {
             System.out.print("Enter player " + (i+1) + " name: ");
-            players.add(new Human(scanner.next(), initialBudget));
+            players.add(new Player(scanner.next(), initialBudget));
         }
 
         cardDeck = new Deck(deckCount);
         dealer = new Dealer("Bruce");
     }
 
+    /**
+     * Starts the game.
+     */
     public void play() {
         while (!gameEnd) {
             round();
@@ -87,6 +89,13 @@ public class Game {
         }
     }
 
+    /**
+     * Displays confirmation dialog.
+     * @param message message to show
+     * @param yes confirmation
+     * @param no rejection
+     * @return true if player typed yes, false otherwise
+     */
     private boolean dialog(String message, String yes, String no) {
         System.out.print(message);
 
@@ -125,7 +134,7 @@ public class Game {
     }
 
     private void placeBets() {
-        for (Human player : players) {
+        for (Player player : players) {
             System.out.print(player.getName() + ", your budget is " + player.getBudget() + ". Place your bet: ");
 
             while (true) {
@@ -155,7 +164,7 @@ public class Game {
     }
 
     private void initialDeal() {
-        for (Human player : players) {
+        for (Player player : players) {
             player.hit(cardDeck.draw());
             player.hit(cardDeck.draw());
             System.out.println(player.getName() + "'s hand:");
@@ -164,6 +173,11 @@ public class Game {
 
         dealer.hit(cardDeck.draw());
         dealer.hit(cardDeck.draw());
+
+        System.out.println("Dealer's revealed card is: " + dealer.firstCard());
+        System.out.println();
+        System.out.println("Press ENTER to continue...");
+        new Scanner(System.in).nextLine();
 
         if (dealer.firstCard().getRank() == CardRank.ACE11) {
             placeInsurance();
@@ -174,7 +188,7 @@ public class Game {
     private void placeInsurance() {
         System.out.println("Dealer has an ace!");
 
-        for (Human player : players) {
+        for (Player player : players) {
             System.out.print(player.getName() + ", enter sum you want to place as insurance: ");
 
             while (true) {
@@ -197,7 +211,7 @@ public class Game {
     private void resolveInsurance() {
         System.out.println("Dealer " + ((dealer.hasBlackjack()) ? "has" : "doesn't have") + " a blackjack.");
 
-        for (Human player : players) {
+        for (Player player : players) {
             int insurance = player.getInsurance();
 
             if (insurance == 0) {
@@ -219,7 +233,7 @@ public class Game {
     }
 
     private void dealerBlackjack() {
-        for (Human player : players) {
+        for (Player player : players) {
             if (player.hasBlackjack()) {
                 System.out.println(player.getName() + " also has a blackjack! They lost nothing.");
                 player.setCurrentBet(0);
@@ -228,7 +242,7 @@ public class Game {
     }
 
     private void turns() {
-        for (Human player : players) {
+        for (Player player : players) {
             playerTurn(player);
 
             System.out.println("Press ENTER to continue...");
@@ -236,7 +250,7 @@ public class Game {
         }
     }
 
-    private void playerTurn(Human player) {
+    private void playerTurn(Player player) {
         boolean done = false;
 
         while (!done) {
@@ -263,7 +277,7 @@ public class Game {
         }
     }
 
-    private boolean chooseAction(Human player, String command) {
+    private boolean chooseAction(Player player, String command) {
         switch (command) {
             case HIT:
                 return hit(player);
@@ -276,7 +290,7 @@ public class Game {
 
             case SPLIT:
                 if (player.canSplit()) {
-                    player.split(cardDeck);
+                    player.split(cardDeck.draw(), cardDeck.draw());
                 }
                 return false;
 
@@ -295,13 +309,17 @@ public class Game {
         }
     }
 
-    private boolean hit(Human player) {
+    private boolean hit(Player player) {
         Card card = cardDeck.draw();
         System.out.println("You drew " + card);
 
         if (card.getRank() == CardRank.ACE11 &&
                 !dialog("Do you want to keep it's value as 11? (y/n) ", "y", "n")) {
             card.setRank(CardRank.ACE1);
+
+        } else if (card.getRank() == CardRank.ACE1 &&
+                !dialog("Do you want to keep it's value as 1? (y/n) ", "y", "n")) {
+            card.setRank(CardRank.ACE11);
         }
         player.hit(card);
         System.out.println("Your sum is " + player.getHandSum());
@@ -313,7 +331,7 @@ public class Game {
         return false;
     }
 
-    private boolean surrender(Human player) {
+    private boolean surrender(Player player) {
         if (player.getCardCount() == 2) {
             System.out.println("You lost " + (player.getCurrentBet() / 2) + ".");
             player.surrender();
@@ -324,7 +342,17 @@ public class Game {
     }
 
     private void printHelp() {
-        System.out.println("help");
+        System.out.println("Available commands:");
+        System.out.println("\t" + HIT + " - draw a new card");
+        System.out.println("\t" + STAND + " - end your turn");
+        System.out.println("\t" + SURRENDER + " - loose half of your bet (only if you have two cards)");
+        System.out.println("\t" + SPLIT + " - split your hand to two hands with separate bets (only if you have " +
+                "two cards with the same value)");
+        System.out.println("\t" + DOUBLE_DOWN + " - double your current bet");
+        System.out.println("\t" + HELP + " - print this help");
+        System.out.println();
+        System.out.println("Press ENTER to continue...");
+        new Scanner(System.in).nextLine();
     }
 
     private void dealersTurn() {
@@ -347,7 +375,7 @@ public class Game {
     private void evaluateRound() {
         System.out.println();
 
-        for (Human player : players) {
+        for (Player player : players) {
             int profit = computeProfit(player);
 
             if (profit == 0) {
@@ -371,7 +399,7 @@ public class Game {
         System.out.println();
     }
 
-    private int computeProfit(Human player) {
+    private int computeProfit(Player player) {
         player.setPlayingAsSplit(false);
         boolean playerWon = hasPlayerWon(player);
 
@@ -389,7 +417,7 @@ public class Game {
         return profit;
     }
 
-    private boolean hasPlayerWon(Human player) {
+    private boolean hasPlayerWon(Player player) {
         if (player.hasBlackjack() && !dealer.hasBlackjack()) {
             player.setCurrentBet(player.getCurrentBet() * 3 / 2);
             return true;
@@ -409,7 +437,7 @@ public class Game {
     }
 
     private void cleanup() {
-        for (Human player : players) {
+        for (Player player : players) {
             if (player.isSplit()) {
                 player.setPlayingAsSplit(false);
 
