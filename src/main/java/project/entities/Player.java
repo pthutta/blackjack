@@ -38,5 +38,9 @@ public abstract class Player {
         return hand.getSum();
     }
 
+    public Hand getHand() {
+        return hand;
+    }
+
     abstract protected void hit(Card card);
 }

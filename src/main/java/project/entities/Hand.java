@@ -14,7 +14,6 @@ import java.util.List;
 public class Hand {
     public static final int HAND_LIMIT = 21;
 
-    private int sum = 0;
     private List<Card> cards = new ArrayList<>();
     private boolean isSoft = false;
 
@@ -26,14 +25,12 @@ public class Hand {
         }
 
         int value = card.getRank().getValue();
-        if (sum + value > HAND_LIMIT && isSoft) {
+        if (getSum() + value > HAND_LIMIT && isSoft) {
             isSoft = false;
             lowerAceValue();
-            sum -= 10;
         }
 
-        sum += value;
-        return sum > HAND_LIMIT;
+        return getSum() > HAND_LIMIT;
     }
 
     public boolean isSoft() {
@@ -41,11 +38,19 @@ public class Hand {
     }
 
     public int getSum() {
+        int sum = 0;
+        for (Card card : cards) {
+            sum += card.getRank().getValue();
+        }
         return sum;
     }
 
+    public int getSize() {
+        return cards.size();
+    }
+
     public boolean isBlackjack() {
-        return cards.size() == 2 && sum == 21;
+        return cards.size() == 2 && getSum() == 21;
     }
 
     public Card getCard(int index) {
@@ -66,6 +71,10 @@ public class Hand {
         }
 
         return null;
+    }
+
+    public void clean() {
+        cards.clear();
     }
 
     private void lowerAceValue() {

@@ -5,11 +5,14 @@ package project.entities;
  * @version 1.0  9.6.2018
  */
 public class Human extends Player {
-    private boolean isPlaying = true;
-    private boolean hasSplit = false;
     private int currentBet;
     private int insurance;
     private int budget;
+
+    private Hand splitHand = null;
+    private int splitBet;
+    private boolean playingAsSplit = false;
+    private boolean splitBusted = false;
 
     public Human(String name, int budget) {
         super(name);
@@ -17,20 +20,34 @@ public class Human extends Player {
         this.budget = budget;
     }
 
-    public boolean isPlaying() {
-        return isPlaying;
+    public Hand getSplitHand() {
+        return splitHand;
     }
 
-    public void setPlaying(boolean playing) {
-        isPlaying = playing;
+    public boolean isPlayingAsSplit() {
+        return playingAsSplit;
     }
 
-    public void setHasSplit(boolean hasSplit) {
-        this.hasSplit = hasSplit;
+    public void setPlayingAsSplit(boolean playing) {
+        playingAsSplit = playing;
+    }
+
+    public boolean isSplit() {
+        return splitHand != null;
     }
 
     public boolean canSplit() {
-        return !hasSplit && hand.canSplit();
+        return !isSplit() && hand.canSplit();
+    }
+
+    @Override
+    public void setBusted(boolean busted) {
+        if (isPlayingAsSplit()) {
+            splitBusted = busted;
+
+        } else {
+            super.setBusted(busted);
+        }
     }
 
     public int getInsurance() {
@@ -42,11 +59,48 @@ public class Human extends Player {
     }
 
     public int getCurrentBet() {
-        return currentBet;
+        if (isPlayingAsSplit()) {
+            return splitBet;
+
+        } else {
+            return currentBet;
+        }
+    }
+
+    public boolean isBusted() {
+        if (isPlayingAsSplit()) {
+            return splitBusted;
+
+        } else {
+            return super.isBusted();
+        }
+    }
+
+    public int getHandSum() {
+        if (isPlayingAsSplit()) {
+            return splitHand.getSum();
+
+        } else {
+            return super.getHandSum();
+        }
+    }
+
+    public boolean hasBlackjack() {
+        if (isPlayingAsSplit()) {
+            return splitHand.isBlackjack();
+
+        } else {
+            return super.hasBlackjack();
+        }
     }
 
     public void setCurrentBet(int currentBet) {
-        this.currentBet = currentBet;
+        if (isPlayingAsSplit()) {
+            this.splitBet = currentBet;
+
+        } else {
+            this.currentBet = currentBet;
+        }
     }
 
     public int getBudget() {
@@ -63,32 +117,64 @@ public class Human extends Player {
 
     @Override
     public void hit(Card card) {
-        if (hand.addCard(card)) {
+        Hand playingHand = (isPlayingAsSplit()) ? splitHand : hand;
+
+        if (playingHand.addCard(card)) {
             setBusted(true);
-            isPlaying = false;
             return;
         }
     }
 
-    public void stand() {
-        isPlaying = false;
-    }
-
     public void surrender() {
-        isPlaying = false;
-        addToBudget(-currentBet / 2);
-        currentBet = 0;
+        if (isPlayingAsSplit()) {
+            addToBudget(-splitBet / 2);
+            splitBet = 0;
+
+        } else {
+            addToBudget(-currentBet / 2);
+            currentBet = 0;
+        }
     }
 
-    public Card split() {
-        return hand.split();
+    public void split(Deck cardDeck) {
+        if (!canSplit()) {
+            return;
+        }
+
+        Card card = hand.split();
+        if (card != null) {
+            splitHand = new Hand();
+            splitHand.addCard(card);
+            splitHand.addCard(cardDeck.draw());
+
+            if (currentBet * 2 > budget) {
+                splitBet = budget - currentBet;
+            } else {
+                splitBet = currentBet;
+            }
+
+            hand.addCard(cardDeck.draw());
+        }
     }
 
     public void doubleDown() {
-        currentBet *= 2;
-        if (currentBet > budget) {
-            currentBet = budget;
+        if (isPlayingAsSplit()) {
+            splitBet *= 2;
+            if (splitBet > budget + currentBet) {
+                splitBet = budget;
+            }
+
+        } else {
+            currentBet *= 2;
+            if (currentBet > budget + splitBet) {
+                currentBet = budget;
+            }
         }
+    }
+
+    public void cleanHand() {
+        hand.clean();
+        splitHand = null;
     }
 
     @Override
@@ -99,17 +185,28 @@ public class Human extends Player {
                 .append(System.lineSeparator());
 
         s.append("Your bet is ")
-                .append(currentBet)
+                .append(getCurrentBet())
                 .append(" and your budget is ")
                 .append(budget)
                 .append(".")
                 .append(System.lineSeparator());
-        s.append("Your current hand is:")
-                .append(System.lineSeparator())
-                .append(hand)
-                .append("with sum of ")
-                .append(hand.getSum())
-                .append(".");
+
+        if (!isPlayingAsSplit()) {
+            s.append("Your current hand is:")
+                    .append(System.lineSeparator())
+                    .append(hand)
+                    .append("with sum of ")
+                    .append(hand.getSum())
+                    .append(".");
+
+        } else {
+            s.append("Your split hand is:")
+                    .append(System.lineSeparator())
+                    .append(splitHand)
+                    .append("with sum of ")
+                    .append(splitHand.getSum())
+                    .append(".");
+        }
 
         return s.toString();
     }

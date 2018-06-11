@@ -14,6 +14,10 @@ public class Dealer extends Player {
         return hand.getCard(0);
     }
 
+    public void cleanHand() {
+        hand.clean();
+    }
+
     @Override
     public void hit(Card card) {
         if (hand.addCard(card)) {
